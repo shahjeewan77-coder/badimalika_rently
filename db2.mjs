@@ -1,0 +1,13 @@
+import pg from "pg";
+import fs from "node:fs";
+const env=fs.readFileSync("/workspace/app/.env","utf8");
+const url=env.match(/^DATABASE_URL=(.*)$/m)[1].trim().replace(/^["']|["']$/g,"");
+const c=new pg.Client({connectionString:url,ssl:{rejectUnauthorized:false}});
+await c.connect();
+const cnt=await c.query("SELECT count(*)::int n, max(recorded_at) mx FROM trip_locations");
+console.log("count/max:", cnt.rows);
+const ids=await c.query("SELECT id,driver_id,order_id,recorded_at FROM trip_locations WHERE id IN ('f68e1f61-d0d8-4989-afc5-966e341b9133')");
+console.log("by id:", ids.rows);
+const db=await c.query("SELECT current_database() d, current_schema() s");
+console.log(db.rows);
+await c.end();

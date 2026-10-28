@@ -1,0 +1,13 @@
+import pg from "pg";
+import fs from "node:fs";
+const env=fs.readFileSync("/workspace/app/.env","utf8");
+const url=env.match(/^DATABASE_URL=(.*)$/m)[1].trim().replace(/^["']|["']$/g,"");
+const c=new pg.Client({connectionString:url,ssl:{rejectUnauthorized:false}});
+await c.connect();
+const r=await c.query(`SELECT id,name,user_id FROM drivers WHERE name LIKE 'Bikash%' OR name LIKE 'Kabiraj%' ORDER BY name`);
+console.log("drivers:",r.rows);
+const t=await c.query(`SELECT id,status,driver_id,locked_by_driver_id,transit_vehicle_id,created_at FROM orders ORDER BY created_at DESC LIMIT 4`);
+console.log("orders:",t.rows);
+const p=await c.query(`SELECT driver_id, count(*)::int n, max(recorded_at) mx FROM trip_locations GROUP BY driver_id`);
+console.log("pings by driver:",p.rows);
+await c.end();
